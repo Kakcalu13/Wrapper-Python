@@ -38,6 +38,8 @@ import json
 import threading
 import time
 import websocket
+import cv2
+import numpy as np
 
 try:
     import thread
@@ -100,6 +102,22 @@ class Robot:
         print(new_data['result']['chargePercent'])
         return new_data['result']['chargePercent']
 
+    def camera_rgb(self):
+        misty_ip = self.ip
+        url = f"http://{misty_ip}/api/cameras/rgb"
+        # Send the GET request to Misty's RGB camera endpoint
+        response_image = requests.get(url)
+        # Check if the request was successful
+        if response_image.status_code == 200:
+            image_array = np.frombuffer(response_image.content, np.uint8)
+            # Decode the image data into an OpenCV image
+            image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+            return image
+        else:
+            return []
+
+
+
     def moveHead(self, roll, pitch, yaw, velocity=10, units="degrees"):
         if (units == "position"):
             assert -5.0 <= roll <= 5.0 and -5.0 <= pitch <= 5.0 and -5.0 <= yaw <= 5.0, " moveHead: Roll, Pitch and Yaw needs to be in range -5 to +5"
@@ -107,7 +125,8 @@ class Robot:
             assert -.75 <= roll <= .75 and -.1662 <= pitch <= .6094 and -1.57 <= yaw <= 1.57, " moveHead: invalid positioning"
         else:
             units = "degrees"
-            assert -9.5 <= pitch <= 34.9 and -43 <= roll <= 43 and -90 <= yaw <= 90, " moveHead: invalid positioning"
+            print("pitch: ", pitch, " roll: ", roll, "yaw: ", yaw)
+            assert (-9.5 <= pitch <= 34.9) and (-43 <= roll <= 43) and (-90 <= yaw <= 90), " moveHead: invalid positioning"
 
         assert 0.0 <= velocity <= 100.0, " moveHead: Velocity needs to be in range 0 to 100"
         requests.post('http://' + self.ip + '/api/head',
@@ -138,7 +157,7 @@ class Robot:
                             "TimeMS": time_in_milli_second})
 
     def driveTrack(self, left_track_speed, right_track_speed):
-        assert -100 <= left_track_speed <= 100 and right_track_speed in -100 <= right_track_speed <= 100, " driveTrack: The velocities needs to be in the range -100 to 100"
+        # assert -100 <= left_track_speed <= 100 and right_track_speed in -100 <= right_track_speed <= 100, " driveTrack: The velocities needs to be in the range -100 to 100"
         requests.post('http://' + self.ip + '/api/drive/track',
                       json={"LeftTrackSpeed": left_track_speed, "RightTrackSpeed": right_track_speed})
 
@@ -227,7 +246,8 @@ class Robot:
     def moveArmRadians(self, arm, position, velocity):
         self.moveArm(arm, position, velocity, "radians")
 
-    def moveArms(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity, units="degrees"):
+    def moveArms(self, rightArmPosition, leftArmPosition, rightArmVelocity=100,
+                 leftArmVelocity=100, units="degrees"):
         units = units.lower()
 
         assert units == "degrees" or units == "radians" or units == "position", "Invalid unit. Please use 'degrees', 'radians', or 'position'"
@@ -244,7 +264,8 @@ class Robot:
                       json={"leftArmPosition": leftArmPosition, "rightArmPosition": rightArmPosition,
                             "leftArmVelocity": leftArmVelocity, "rightArmVelocity": rightArmVelocity, "units": units})
 
-    def moveArmsDegrees(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity):
+    def moveArmsDegrees(self, rightArmPosition, leftArmPosition, rightArmVelocity=100,
+                        leftArmVelocity=100):
         self.moveArms(rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity, "degrees")
 
     def moveArmsPosition(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity):
