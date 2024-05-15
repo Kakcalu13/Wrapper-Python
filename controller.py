@@ -28,7 +28,6 @@ from collections import deque
 from websockets.sync.client import connect
 import json
 
-
 camera_data = {"vision": []}
 servo_status = {}
 
@@ -58,7 +57,6 @@ def process_video(capabilities, misty):
         except KeyboardInterrupt:
             break
         sleep(0.01)
-
 
 
 def action(obtained_data):
@@ -99,10 +97,11 @@ def action(obtained_data):
                 servo_status[current_id] = actuators.servo_keep_boundaries(power, 43, -43)
                 if (servo_status[current_id] != 43) and (servo_status[current_id] != -43):
                     misty.moveHeadDegrees(servo_status[current_id], servo_status[0], 0,
-                                          100) #hardcoded, whatever. misty is so API based zzz
+                                          100)  # hardcoded, whatever. misty is so API based zzz
                     # needs websocket to make it super smooth. Hopefully, misty can be updated to
                     # websocket only instead of https to move head/arms/drive
     if 'servo_position' in obtained_data:
+        print(obtained_data)
         try:
             head_flag = False
             arms_flag = False
@@ -114,22 +113,22 @@ def action(obtained_data):
                             servo_status[i] = 0
                     if data_point == 0:
                         encoder_position = ((obtained_data['servo_position'][data_point] - 0) / (
-                                    20 - 0)) * (capabilities['servo']['servo_range'][str(0)][1] -
-                                                capabilities['servo']['servo_range'][str(0)][0]) \
+                                20 - 0)) * (capabilities['servo']['servo_range'][str(0)][1] -
+                                            capabilities['servo']['servo_range'][str(0)][0]) \
                                            + capabilities['servo']['servo_range'][str(0)][0]
                         servo_status[0] = encoder_position
                         head_flag = True
                     if data_point == 1:
                         encoder_position = ((obtained_data['servo_position'][data_point] - 0) / (
-                                    20 - 0)) * (capabilities['servo']['servo_range'][str(1)][1] -
-                                                capabilities['servo']['servo_range'][str(1)][0]) \
+                                20 - 0)) * (capabilities['servo']['servo_range'][str(1)][1] -
+                                            capabilities['servo']['servo_range'][str(1)][0]) \
                                            + capabilities['servo']['servo_range'][str(1)][0]
                         servo_status[1] = encoder_position
                         head_flag = True
                     if data_point == 2:
                         encoder_position = ((obtained_data['servo_position'][data_point] - 0) / (
-                                    20 - 0)) * (capabilities['servo']['servo_range'][str(2)][1] -
-                                                capabilities['servo']['servo_range'][str(2)][0]) \
+                                20 - 0)) * (capabilities['servo']['servo_range'][str(2)][1] -
+                                            capabilities['servo']['servo_range'][str(2)][0]) \
                                            + capabilities['servo']['servo_range'][str(2)][0]
                         servo_status[2] = encoder_position
                         head_flag = True
@@ -140,7 +139,7 @@ def action(obtained_data):
                         max_output = capabilities['servo']['servo_range'][str(3)][1]
                         current_value = obtained_data['servo_position'][data_point]
                         encoder_position = ((current_value - min_input) / (
-                                    max_input - min_input)) * (max_output - min_output) + min_output
+                                max_input - min_input)) * (max_output - min_output) + min_output
                         servo_status[3] = encoder_position
                         arms_flag = True
                     if data_point == 4:
@@ -150,7 +149,7 @@ def action(obtained_data):
                         max_output = capabilities['servo']['servo_range'][str(4)][1]
                         current_value = obtained_data['servo_position'][data_point]
                         encoder_position = ((current_value - min_input) / (
-                                    max_input - min_input)) * (max_output - min_output) + min_output
+                                max_input - min_input)) * (max_output - min_output) + min_output
                         servo_status[4] = encoder_position
                         arms_flag = True
                 if head_flag:
@@ -199,9 +198,9 @@ if __name__ == "__main__":
     default_capabilities = {}  # It will be generated in process_visual_stimuli. See the
     # overwrite manual
     default_capabilities = pns.create_runtime_default_list(default_capabilities, capabilities)
-    threading.Thread(target=retina.vision_progress,
-                     args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
-                           camera_data['vision'],), daemon=True).start()
+    # threading.Thread(target=retina.vision_progress,
+    #                  args=(default_capabilities, feagi_opu_channel, api_address, feagi_settings,
+    #                        camera_data['vision'],), daemon=True).start()
 
     # motor setting
     rolling_window_len = capabilities['motor']['rolling_window_len']
@@ -214,7 +213,7 @@ if __name__ == "__main__":
 
     misty = Robot(capabilities['misty']['ip'])
     misty.changeLED(0, 0, 255)
-    threading.Thread(target=process_video, args=(capabilities, misty), daemon=True).start()
+    # threading.Thread(target=process_video, args=(capabilities, misty), daemon=True).start()
     # threading.Thread(target=getting_websocket_data, daemon=True).start()
 
     while True:
